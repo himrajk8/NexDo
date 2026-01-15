@@ -1,6 +1,10 @@
-import React from 'react';
+import { Activity } from '../types';
 
-const ProgressBar = ({ activities }) => {
+interface ProgressBarProps {
+  activities: Activity[];
+}
+
+const ProgressBar = ({ activities }: ProgressBarProps) => {
   const total = activities.length;
   const completed = activities.filter(a => a.completed).length;
   const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
@@ -13,9 +17,13 @@ const ProgressBar = ({ activities }) => {
       </div>
       <div className="progress-bar-container">
         <div 
-          className="progress-fill" 
-          style={{ width: `${percentage}%` }}
+          className="progress-track" 
+          style={{ width: `${100 - percentage}%`, left: `${percentage}%` }}
         ></div>
+        <div className="progress-fill" style={{ width: `${percentage}%` }}>
+          <div className="progress-wave"></div>
+          <div className="progress-handle"></div>
+        </div>
       </div>
     </div>
   );

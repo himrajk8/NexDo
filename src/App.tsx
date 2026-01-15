@@ -1,39 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import TimerWidget from './components/TimerWidget';
 import ActivityList from './components/ActivityList';
 import ProgressBar from './components/ProgressBar';
 import PomodoroStats from './components/PomodoroStats';
-
 import Modal from './components/Modal';
+import { Activity, TaskHistory, PomodoroSession } from './types';
 
 function App() {
   // State
-  const [activities, setActivities] = useState(() => {
+  const [activities, setActivities] = useState<Activity[]>(() => {
     const saved = localStorage.getItem('activities');
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [taskHistory, setTaskHistory] = useState(() => {
+  const [taskHistory, setTaskHistory] = useState<TaskHistory>(() => {
     const saved = localStorage.getItem('taskHistory');
     return saved ? JSON.parse(saved) : {};
   });
 
-  const [pomodoroHistory, setPomodoroHistory] = useState(() => {
+  const [pomodoroHistory, setPomodoroHistory] = useState<PomodoroSession[]>(() => {
     const saved = localStorage.getItem('pomodoroHistory');
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [inputValue, setInputValue] = useState('');
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [inputValue, setInputValue] = useState<string>('');
+  const [theme, setTheme] = useState<string>(() => localStorage.getItem('theme') || 'dark');
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalConfig, setModalConfig] = useState({
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    isDanger: boolean;
+    confirmText?: string;
+    cancelText?: string | null;
+  }>({
     title: '',
     message: '',
     onConfirm: () => {},
-    isDanger: false
+    isDanger: false,
+    confirmText: 'Confirm',
+    cancelText: 'Cancel'
   });
 
   // Effects
@@ -60,7 +69,7 @@ function App() {
 
   // Mouse Follower Effect
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent) => {
       document.body.style.setProperty('--x', `${e.clientX}px`);
       document.body.style.setProperty('--y', `${e.clientY}px`);
     };
@@ -74,11 +83,11 @@ function App() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const addActivity = (text) => {
+  const addActivity = (text?: string) => {
     const taskText = text || inputValue.trim();
     if (!taskText) return;
 
-    const newActivity = {
+    const newActivity: Activity = {
       id: Date.now(),
       text: taskText,
       completed: false,
@@ -90,7 +99,7 @@ function App() {
     if (!text) setInputValue('');
   };
 
-  const toggleActivity = (id) => {
+  const toggleActivity = (id: number) => {
     const activity = activities.find(a => a.id === id);
     if (!activity) return;
 
@@ -111,7 +120,8 @@ function App() {
     }
   };
 
-  const updateHistory = (taskName, timestamp) => {
+  const updateHistory = (taskName: string, timestamp: number | null) => {
+    if (!timestamp) return;
     const normalizedName = taskName.trim();
     
     setTaskHistory(prev => {
@@ -128,7 +138,7 @@ function App() {
     });
   };
 
-  const deleteActivity = (id) => {
+  const deleteActivity = (id: number) => {
     setActivities(prev => prev.filter(a => a.id !== id));
   };
 
@@ -145,7 +155,7 @@ function App() {
     setIsModalOpen(true);
   };
 
-  const confirmDeleteHistoryItem = (taskName) => {
+  const confirmDeleteHistoryItem = (taskName: string) => {
     setModalConfig({
       title: 'Delete Task History?',
       message: `Are you sure you want to remove "${taskName}" from your history?`,
@@ -161,8 +171,8 @@ function App() {
     setIsModalOpen(true);
   };
 
-  const handlePomodoroComplete = (duration, label) => {
-    const session = {
+  const handlePomodoroComplete = (duration: number, label: string) => {
+    const session: PomodoroSession = {
       duration,
       label,
       timestamp: Date.now()
@@ -170,14 +180,41 @@ function App() {
     setPomodoroHistory(prev => [session, ...prev].slice(0, 10));
   };
 
+  const handleTimerAlert = (message: string) => {
+    setModalConfig({
+      title: 'Timer Complete',
+      message: message,
+      onConfirm: () => {}, // No action needed on confirm
+      isDanger: false,
+      confirmText: 'OK',
+      cancelText: null // Hide cancel button
+    });
+    setIsModalOpen(true);
+  };
+
+  const pendingActivities = activities.filter(a => !a.completed);
+  const completedActivities = activities.filter(a => a.completed);
+
   return (
     <>
-      <div className="brand">Nexdo</div>
-      <div className="header-controls">
-        <TimerWidget onPomodoroComplete={handlePomodoroComplete} />
-        <button className="theme-toggle" onClick={toggleTheme}>
-          <svg className="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-          <svg className="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+
+
+      <div className="app-header">
+        <div className="brand">Nexdo</div>
+        
+        <div className="header-title-group">
+          <h1 className="header-title">Activity Tracker</h1>
+          <p className="header-subtitle">Stay productive, track your progress.</p>
+        </div>
+        <button 
+          className="theme-toggle header-toggle" 
+          onClick={toggleTheme}
+        >
+          {theme === 'light' ? (
+            <svg className="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          ) : (
+            <svg className="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          )}
         </button>
       </div>
 
@@ -191,10 +228,6 @@ function App() {
         />
 
         <div className="container">
-          <header>
-            <h1>Activity Tracker</h1>
-            <p className="subtitle">Stay productive, track your progress.</p>
-          </header>
 
           <ProgressBar activities={activities} />
 
@@ -212,15 +245,32 @@ function App() {
             </button>
           </div>
 
+          <h3 className="section-title">Pending Tasks</h3>
           <ActivityList 
-            activities={activities} 
+            activities={pendingActivities} 
             onToggle={toggleActivity} 
             onDelete={deleteActivity} 
           />
         </div>
 
         <aside className="right-sidebar">
+          <div style={{ width: '100%' }}>
+            <TimerWidget 
+              onPomodoroComplete={handlePomodoroComplete} 
+              onAlert={handleTimerAlert}
+            />
+          </div>
           <PomodoroStats pomodoroHistory={pomodoroHistory} />
+          
+          <div className="completed-tasks-box">
+            <h3 className="section-title">Completed Tasks</h3>
+            <ActivityList 
+              activities={completedActivities} 
+              onToggle={toggleActivity} 
+              onDelete={deleteActivity}
+              isCompletedList={true}
+            />
+          </div>
         </aside>
       </div>
       
@@ -235,6 +285,8 @@ function App() {
         title={modalConfig.title}
         message={modalConfig.message}
         isDanger={modalConfig.isDanger}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
       />
     </>
   );

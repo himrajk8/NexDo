@@ -107,37 +107,126 @@ body.light-mode::before {
     );
 }
 
-/* Header Controls (Top Right) */
-.header-controls {
-    position: absolute;
-    top: 20px;
-    right: 20px;
+/* App Header */
+.app-header {
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    width: 100vw;
+    box-sizing: border-box;
     z-index: 50;
-    align-items: center; /* Center align items vertically */
+    position: relative;
+    left: 0;
+    right: 0;
+    background: transparent;
 }
 
 .brand {
-    position: absolute;
-    top: 20px;
-    left: 20px;
     font-family: 'Outfit', sans-serif;
     font-weight: 800;
     font-size: 1.8rem;
-    background: linear-gradient(135deg, #00d4ff 0%, #00ff9d 100%);
+    background: var(--primary-color);
     -webkit-background-clip: text;
-    background-clip: text; /* Standard property for compatibility */
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
     letter-spacing: -0.5px;
-    z-index: 50;
     transition: background 0.3s ease;
+    /* Removed absolute positioning */
+}
+
+.header-toggle {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    z-index: 100;
+}
+
+/* New Header Title */
+/* New Header Title */
+.header-title-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 15px; /* Match padding of header */
+    z-index: 60; /* Ensure on top */
+}
+
+/* Background Glow Effect */
+.header-title-group::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%);
+    filter: blur(20px);
+    z-index: -1;
+    pointer-events: none;
+    animation: glow-pulse 4s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.header-title {
+    font-size: 1.8rem; /* Increased size slightly */
+    font-weight: 800;
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1.2;
+    
+    /* Gradient Text */
+    background: linear-gradient(135deg, #fff 0%, var(--primary-color) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    
+    /* Glowing Text */
+    filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.4));
+    letter-spacing: -0.5px;
+}
+
+body.light-mode .header-title {
+    /* Darker gradient for light mode: Secondary (Dark Blue) -> Primary (Sky Blue) */
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    
+    /* Adjusted glow for light mode */
+    filter: drop-shadow(0 0 15px rgba(14, 165, 233, 0.3));
+}
+
+.header-subtitle {
+     font-size: 0.75rem;
+     color: var(--text-muted);
+     margin: 0;
+}
+
+@media (max-width: 768px) {
+    .header-title-group {
+        position: static;
+        transform: none;
+        order: 2;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .app-header {
+        flex-wrap: wrap;
+    }
 }
 
 body.light-mode .brand {
-    background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+    background: var(--primary-color);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -156,7 +245,7 @@ body.light-mode .brand {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    min-width: 160px; /* Back to min-width for top right */
+    width: 100%; /* Full width of container */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--card-shadow);
 }
@@ -309,10 +398,7 @@ body.light-mode .pomo-btn.active {
     box-shadow: var(--hover-shadow);
 }
 
-.sun-icon { display: none; }
-.moon-icon { display: block; }
-body.light-mode .sun-icon { display: block; }
-body.light-mode .moon-icon { display: none; }
+
 
 /* Main Layout */
 .main-wrapper {
@@ -320,9 +406,10 @@ body.light-mode .moon-icon { display: none; }
     grid-template-columns: 260px 1fr 280px; /* 3 Columns */
     gap: 24px;
     width: 100%;
-    max-width: 1200px;
+    /* max-width: 1200px; Removed for full width */
+    padding: 0 12px; /* Reduced padding for maximum width */
     align-items: start;
-    margin-top: 160px; /* Increased further as requested */
+    margin-top: 20px; /* Reduced since we now have a static header */
 }
 
 @media (max-width: 1024px) {
@@ -449,6 +536,13 @@ body.light-mode .history-count {
     padding: 24px;
     animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
     box-shadow: var(--card-shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.container:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--hover-shadow);
+    transform: translateY(-2px);
 }
 
 @keyframes slideUp {
@@ -491,20 +585,76 @@ h1 {
 
 .progress-bar-container {
     width: 100%;
-    height: 8px;
-    background: var(--input-bg);
-    border-radius: 20px;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
+    height: 24px; /* Increased for wave amplitude */
+    position: relative;
+    /* Removed overflow: hidden to allow handle handle to stick out if needed, but wave needs clip */
+    /* Actually for the track line we want it centered */
+    display: flex;
+    align-items: center;
+}
+
+.progress-track {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    /* Track is a straight line */
 }
 
 .progress-fill {
     height: 100%;
-    width: 0%;
-    background: var(--primary-color);
-    border-radius: 20px;
-    transition: width 0.5s ease;
-    box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+    position: absolute;
+    left: 0;
+    top: 0;
+    /* overflow: visible; needed for handle? No, handle is child. Fill clips wave? No wave clips itself */
+    display: flex;
+    align-items: center;
+}
+
+.progress-wave {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--primary-color);
+    
+    /* Glow effect */
+    filter: drop-shadow(0 0 2px var(--primary-color)) drop-shadow(0 0 4px var(--primary-color));
+    
+    /* Sine Wave Mask */
+    --wave-width: 20px;
+    --wave-height: 100%;
+    
+    /* Added overflow='visible' and stroke-linecap='square' to ensure seamless tiling */
+    mask-image: url("data:image/svg+xml,%3Csvg width='20' height='24' viewBox='0 0 20 24' overflow='visible' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 12 Q 5 4, 10 12 T 20 12' stroke='white' stroke-width='3' stroke-linecap='square' fill='none' /%3E%3C/svg%3E");
+    mask-repeat: repeat-x;
+    mask-size: 20px 100%;
+    
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='20' height='24' viewBox='0 0 20 24' overflow='visible' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 12 Q 5 4, 10 12 T 20 12' stroke='white' stroke-width='3' stroke-linecap='square' fill='none' /%3E%3C/svg%3E");
+    -webkit-mask-repeat: repeat-x;
+    -webkit-mask-size: 20px 100%;
+    
+    animation: wave-move 1s linear infinite;
+}
+
+.progress-handle {
+    position: absolute;
+    right: 0; /* Align to the end of width% */
+    width: 4px;
+    height: 12px; /* Slightly taller than wave peak visually? or match */
+    background: #fff;
+    border-radius: 4px;
+    transform: translateX(50%); /* Center on the tip */
+    box-shadow: 0 0 8px var(--primary-color);
+    z-index: 2;
+}
+
+@keyframes wave-move {
+    0% { mask-position: 0 0; -webkit-mask-position: 0 0; }
+    100% { mask-position: -20px 0; -webkit-mask-position: -20px 0; }
 }
 
 /* Input Group */
@@ -715,6 +865,32 @@ body.light-mode .checkbox svg {
 .checkbox.disabled:hover {
     box-shadow: none;
     border-color: var(--border-color);
+}
+
+/* Completed Tasks Box (Right Sidebar) */
+.completed-tasks-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+    max-height: 500px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.completed-tasks-box .section-title {
+    margin-top: 0;
+}
+
+.completed-tasks-box .activity-item {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+.completed-tasks-box .activity-meta {
+    font-size: 0.7rem;
 }
 
 /* Pomodoro Stats */

@@ -1,67 +1,96 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-const TimerWidget = ({ onPomodoroComplete }) => {
-  const [mode, setMode] = useState('clock'); // clock, pomodoro, stopwatch
+interface TimerWidgetProps {
+  onPomodoroComplete: (duration: number, label: string) => void;
+  onAlert: (message: string) => void;
+}
+
+const TimerWidget = ({ onPomodoroComplete, onAlert }: TimerWidgetProps) => {
+  const [mode, setMode] = useState('clock'); // clock, pomodoro
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [pomodoroDuration, setPomodoroDuration] = useState(25);
-  const [stopwatchLabel, setStopwatchLabel] = useState('');
   const [pomodoroLabel, setPomodoroLabel] = useState('');
   
-  const intervalRef = useRef(null);
+  const intervalRef = useRef<number | null>(null);
+  const isCompletingRef = useRef(false);
 
   useEffect(() => {
     if (mode === 'clock') {
       const updateClock = () => setTime(Date.now()); // Use timestamp for clock
       updateClock();
-      intervalRef.current = setInterval(updateClock, 1000);
+      intervalRef.current = window.setInterval(updateClock, 1000);
     } else {
-      clearInterval(intervalRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setIsRunning(false);
+      isCompletingRef.current = false;
       if (mode === 'pomodoro') setTime(pomodoroDuration * 60);
       else setTime(0);
     }
 
-    return () => clearInterval(intervalRef.current);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [mode, pomodoroDuration]);
 
   useEffect(() => {
     if (isRunning) {
-      intervalRef.current = setInterval(() => {
-        if (mode === 'pomodoro') {
-          setTime(prev => {
-            if (prev <= 1) {
-              clearInterval(intervalRef.current);
-              setIsRunning(false);
-              
-              // Complete current session
-              onPomodoroComplete(pomodoroDuration, pomodoroLabel);
-              alert('Pomodoro Finished! Time for a break.');
-              
-              // Auto-transition logic
-              if (pomodoroDuration === 25) {
-                setPomodoroDuration(5); // Switch to break
-                setPomodoroLabel('Break'); // Optional auto-label
-              } else {
-                setPomodoroDuration(25); // Switch back to work
-                setPomodoroLabel('');
-              }
-              
-              return 0;
-            }
-            return prev - 1;
-          });
-        } else if (mode === 'stopwatch') {
-          setTime(prev => prev + 1);
-        }
-      }, 1000);
-    } else if (mode !== 'clock') {
-      clearInterval(intervalRef.current);
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [isRunning, mode, pomodoroDuration, onPomodoroComplete, pomodoroLabel]);
+      // Calculate the target end time based on current remaining seconds
+      const endTime = Date.now() + time * 1000;
 
-  const formatTime = (seconds) => {
+      intervalRef.current = window.setInterval(() => {
+        if (mode === 'pomodoro') {
+          const now = Date.now();
+          const remaining = Math.ceil((endTime - now) / 1000);
+
+          if (remaining <= 0) {
+            if (isCompletingRef.current) return;
+            isCompletingRef.current = true;
+
+            if (intervalRef.current) clearInterval(intervalRef.current);
+            setIsRunning(false);
+            setTime(0);
+            
+            // Complete current session
+            onPomodoroComplete(pomodoroDuration, pomodoroLabel);
+            
+            if (pomodoroDuration === 5 || pomodoroDuration === 10) {
+              onAlert('Break is over! Time to focus.');
+            } else if (pomodoroDuration === 25 || pomodoroDuration === 50) {
+              onAlert('Great work! Time for a break.');
+            } else {
+              onAlert('Timer Finished!');
+            }
+            
+            // Auto-transition logic
+            if (pomodoroDuration === 25) {
+              setPomodoroDuration(5); // Switch to short break
+              setPomodoroLabel('Break');
+            } else if (pomodoroDuration === 50) {
+              setPomodoroDuration(10); // Switch to long break
+              setPomodoroLabel('Break');
+            } else if (pomodoroDuration === 5) {
+              setPomodoroDuration(25); // Switch back to normal work
+              setPomodoroLabel('');
+            } else if (pomodoroDuration === 10) {
+              setPomodoroDuration(50); // Switch back to long work
+              setPomodoroLabel('');
+            }
+          } else {
+             setTime(remaining);
+          }
+        }
+      }, 100); // Run faster check (100ms) for responsiveness
+    } else if (mode !== 'clock') {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+    return () => {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning, mode, pomodoroDuration, onPomodoroComplete, pomodoroLabel, onAlert]); // Exclude 'time' to capture it only on start
+
+  const formatTime = (seconds: number) => {
     if (mode === 'clock') {
       return new Date(seconds).toLocaleTimeString();
     }
@@ -81,17 +110,17 @@ const TimerWidget = ({ onPomodoroComplete }) => {
   const handlePause = () => setIsRunning(false);
   const handleReset = () => {
     setIsRunning(false);
+    isCompletingRef.current = false;
     if (mode === 'pomodoro') setTime(pomodoroDuration * 60);
     else {
       setTime(0);
-      setStopwatchLabel('');
     }
   };
 
   return (
     <div className="timer-widget">
       <div className="timer-modes">
-        {['clock', 'pomodoro', 'stopwatch'].map(m => (
+        {['clock', 'pomodoro'].map(m => (
           <button 
             key={m}
             className={`mode-btn ${mode === m ? 'active' : ''}`}
@@ -104,7 +133,7 @@ const TimerWidget = ({ onPomodoroComplete }) => {
 
       {mode === 'pomodoro' && (
         <div className="pomodoro-controls">
-          {[25, 5].map(d => (
+          {[25, 5, 50, 10].map(d => (
             <button 
               key={d}
               className={`pomo-btn ${pomodoroDuration === d ? 'active' : ''}`}
@@ -128,15 +157,7 @@ const TimerWidget = ({ onPomodoroComplete }) => {
         />
       )}
 
-      {mode === 'stopwatch' && (
-        <input 
-          type="text" 
-          className="stopwatch-label" 
-          placeholder="Label your session"
-          value={stopwatchLabel}
-          onChange={(e) => setStopwatchLabel(e.target.value)}
-        />
-      )}
+
 
       {mode !== 'clock' && (
         <div className="timer-controls">

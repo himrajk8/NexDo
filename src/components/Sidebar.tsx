@@ -1,18 +1,21 @@
-import React from 'react';
+import { TaskHistory, PomodoroSession } from '../types';
 
-const Sidebar = ({ taskHistory, pomodoroHistory, onQuickAdd, onResetHistory, onDeleteHistoryItem }) => {
+interface SidebarProps {
+  taskHistory: TaskHistory;
+  pomodoroHistory: PomodoroSession[];
+  onQuickAdd: (taskName: string) => void;
+  onResetHistory: () => void;
+  onDeleteHistoryItem: (taskName: string) => void;
+}
+
+const Sidebar = ({ taskHistory, pomodoroHistory, onQuickAdd, onResetHistory, onDeleteHistoryItem }: SidebarProps) => {
   const sortedHistory = Object.entries(taskHistory).sort((a, b) => b[1].count - a[1].count);
 
   const handleReset = () => {
     onResetHistory();
   };
 
-  const formatDates = (timestamps) => {
-    return timestamps.map(ts => {
-      const date = new Date(ts);
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    }).join('<br>'); // Note: We'll need to use dangerouslySetInnerHTML or split map
-  };
+
 
   return (
     <aside className="sidebar">
@@ -32,15 +35,15 @@ const Sidebar = ({ taskHistory, pomodoroHistory, onQuickAdd, onResetHistory, onD
               opacity: 0.8,
               transition: 'all 0.2s ease'
             }}
-            onMouseEnter={(e) => {
-              e.target.style.background = 'var(--danger-color)';
-              e.target.style.color = '#fff';
-              e.target.style.opacity = '1';
+            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+              e.currentTarget.style.background = 'var(--danger-color)';
+              e.currentTarget.style.color = '#fff';
+              e.currentTarget.style.opacity = '1';
             }}
-            onMouseLeave={(e) => {
-              e.target.style.background = 'transparent';
-              e.target.style.color = 'var(--danger-color)';
-              e.target.style.opacity = '0.8';
+            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'var(--danger-color)';
+              e.currentTarget.style.opacity = '0.8';
             }}
           >
             Reset
@@ -62,7 +65,7 @@ const Sidebar = ({ taskHistory, pomodoroHistory, onQuickAdd, onResetHistory, onD
                 <button 
                   className="delete-btn"
                   style={{ width: '20px', height: '20px', opacity: 0.6 }}
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
                     onDeleteHistoryItem(name);
                   }}
@@ -88,7 +91,15 @@ const Sidebar = ({ taskHistory, pomodoroHistory, onQuickAdd, onResetHistory, onD
           <li key={index} className="history-item" style={{ cursor: 'default' }}>
             <div className="history-header">
               <span className="history-name">
-                {session.duration}m {session.label ? `- ${session.label}` : 'Session'}
+                {session.label 
+                  ? `${session.duration}m - ${session.label}` 
+                  : (session.duration === 25 || session.duration === 50) 
+                    ? 'Work' 
+                    : session.duration === 5 
+                      ? '5m Break' 
+                    : session.duration === 10
+                      ? '10m Break'
+                      : `${session.duration}m Session`}
               </span>
             </div>
             <div className="history-dates">

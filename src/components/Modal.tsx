@@ -1,6 +1,15 @@
-import React from 'react';
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string | null;
+  isDanger?: boolean;
+}
 
-const Modal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", isDanger = false }) => {
+const Modal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", isDanger = false }: ModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -9,9 +18,11 @@ const Modal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Conf
         <h3>{title}</h3>
         <p>{message}</p>
         <div className="modal-actions">
-          <button className="modal-btn cancel" onClick={onClose}>
-            {cancelText}
-          </button>
+          {cancelText && (
+            <button className="modal-btn cancel" onClick={onClose}>
+              {cancelText}
+            </button>
+          )}
           <button 
             className={`modal-btn confirm ${isDanger ? 'danger' : ''}`} 
             onClick={() => {
